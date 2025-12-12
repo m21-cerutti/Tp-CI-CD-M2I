@@ -21,9 +21,8 @@
     - docker build --pull -t $IMAGE $IMAGE_CONTEXT
     #- docker run $IMAGE
     - docker push $IMAGE
-  only:
-    changes:
-      - .gitlab-ci.yml
+  rules:
+    - changes:
       - $IMAGE_CONTEXT/Dockerfile
 
 # ------------------------------
@@ -73,14 +72,15 @@ test:
 build:
   stage: build
   needs: [test]
-  extends:
-    - .build-image
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-  
   variables:
     IMAGE: $CI_REGISTRY_IMAGE/bug-tracker:latest
     IMAGE_CONTEXT: "."
+  extends:
+    - .build-image
+  rules:
+    # https://github.com/redhat-developer/vscode-yaml/issues/925#issuecomment-1835560084
+    - !reference [.build-image, rules]
+    - if: $CI_COMMIT_BRANCH == "main"
 
   # TODO: Configurer les conditions d'exécution
   # Ce job ne doit s'exécuter que si:
