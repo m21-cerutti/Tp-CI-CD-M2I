@@ -14,6 +14,9 @@ Cypress.on('uncaught:exception', (err, runnable) => {
 // Hook avant chaque test
 beforeEach(() => {
   // Visiter la page d'accueil et attendre le chargement
+  
+  cy.intercept('GET', '/api/bugs').as('getBugs');
   cy.visit('/');
   cy.get('[data-testid="bug-list"]').should('exist');
+  cy.wait('@getBugs');
 });

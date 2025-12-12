@@ -19,35 +19,38 @@ Cypress.Commands.add('createBug', (bugData) => {
   } = bugData;
 
   cy.get('[data-testid="new-bug-btn"]').click();
-  cy.get('[data-testid="bug-modal"]').should('be.visible');
 
-  cy.get('[data-testid="bug-title"]').clear().type(title);
-  cy.get('[data-testid="bug-priority"]').select(priority);
-  cy.get('[data-testid="bug-severity"]').select(severity);
-  cy.get('[data-testid="bug-description"]').clear().type(description);
+  cy.get('[data-testid="bug-modal"]').should('be.visible').within(() => {
 
-  if (assignee) {
-    cy.get('[data-testid="bug-assignee"]').select(assignee);
-  }
+    cy.get('[data-testid="bug-title"]').clear().type(title);
+    cy.get('[data-testid="bug-priority"]').select(priority);
+    cy.get('[data-testid="bug-severity"]').select(severity);
+    cy.get('[data-testid="bug-description"]').clear().type(description);
 
-  if (environment) {
-    cy.get('[data-testid="bug-environment"]').select(environment);
-  }
+    if (assignee) {
+      cy.get('[data-testid="bug-assignee"]').select(assignee);
+    }
 
-  if (steps) {
-    cy.get('[data-testid="bug-steps"]').clear().type(steps);
-  }
+    if (environment) {
+      cy.get('[data-testid="bug-environment"]').select(environment);
+    }
 
-  if (expected) {
-    cy.get('[data-testid="bug-expected"]').clear().type(expected);
-  }
+    if (steps) {
+      cy.get('[data-testid="bug-steps"]').clear().type(steps);
+    }
 
-  if (actual) {
-    cy.get('[data-testid="bug-actual"]').clear().type(actual);
-  }
+    if (expected) {
+      cy.get('[data-testid="bug-expected"]').clear().type(expected);
+    }
 
-  cy.get('[data-testid="submit-btn"]').click();
-  cy.get('[data-testid="bug-modal"]').should('not.be.visible');
+    if (actual) {
+      cy.get('[data-testid="bug-actual"]').clear().type(actual);
+    }
+
+    cy.get('[data-testid="submit-btn"]').click().then(
+      () => cy.get('[data-testid="bug-modal"]').should('not.exist')
+    )
+  });
 });
 
 /**

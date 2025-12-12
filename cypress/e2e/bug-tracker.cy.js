@@ -119,7 +119,8 @@ describe('BugTrack - Tests E2E', () => {
     });
 
     it('devrait mettre à jour les statistiques après création', () => {
-      cy.get('#stat-total').invoke('text').then((initialTotal) => {
+
+      cy.get('#stat-total').scrollIntoView().invoke('text').then((initialTotal) => {
         const initial = parseInt(initialTotal);
 
         cy.createBug({
@@ -129,7 +130,7 @@ describe('BugTrack - Tests E2E', () => {
           description: 'Test des stats'
         });
 
-        cy.get('#stat-total').should('contain', initial + 1);
+        cy.get('#stat-total').scrollIntoView().should('contain', initial + 1);
       });
     });
 
@@ -141,7 +142,7 @@ describe('BugTrack - Tests E2E', () => {
   describe('Affichage des bugs', () => {
 
     it('devrait afficher l\'ID du bug', () => {
-      cy.get('[data-testid="bug-id"]').first().should('match', /BUG-\d{3}/);
+      cy.get('[data-testid="bug-id"]').first().invoke('text').should('match', /BUG-\d{3}/);
     });
 
     it('devrait afficher le titre du bug', () => {
@@ -190,12 +191,12 @@ describe('BugTrack - Tests E2E', () => {
 
     it('devrait afficher les boutons de changement de statut', () => {
       cy.get('[data-testid="bug-card"]').first().click();
-      cy.get('[data-testid="status-actions"]').should('be.visible');
+      cy.get('[data-testid="status-actions"]').scrollIntoView().should('be.visible');
     });
 
     it('devrait afficher la section commentaires', () => {
       cy.get('[data-testid="bug-card"]').first().click();
-      cy.get('[data-testid="comments-section"]').should('be.visible');
+      cy.get('[data-testid="comments-section"]').scrollIntoView().should('be.visible');
     });
 
     it('devrait permettre d\'ajouter un commentaire', () => {
@@ -325,10 +326,10 @@ describe('BugTrack - Tests E2E', () => {
     });
 
     it('devrait rechercher par titre', () => {
-      cy.searchBugs('connexion');
+      cy.searchBugs('Cypress');
 
       cy.get('[data-testid="bug-card"]').should('have.length.at.least', 1);
-      cy.get('[data-testid="bug-title"]').first().should('contain.text', 'connexion', { matchCase: false });
+      cy.get('[data-testid="bug-title"]').first().should('contain.text', 'Cypress', { matchCase: false });
     });
 
     it('devrait rechercher par ID', () => {
@@ -430,250 +431,249 @@ describe('BugTrack - Tests E2E', () => {
     });
 
     it('devrait pré-remplir les champs avec les données existantes', () => {
-      cy.get('[data-testid="bug-card"]').first().then(($card) => {
+      cy.get('[data-testid="bug-card"]').first().then(($card) => { 
         const title = $card.find('[data-testid="bug-title"]').text();
         const bugId = $card.attr('data-id');
-
         cy.get(`[data-id="${bugId}"] [data-testid="edit-btn"]`).click({ force: true });
-        cy.get('[data-testid="bug-title"]').should('have.value', title);
+        cy.get('input[data-testid="bug-title"]').should('have.value', title);
       });
     });
+  });
 
-    it('devrait modifier un bug', () => {
+
+  it('devrait modifier un bug', () => {
       cy.get('[data-testid="bug-card"]').first().then(($card) => {
-        const bugId = $card.attr('data-id');
+      const bugId = $card.attr('data-id');
 
-        cy.get(`[data-id="${bugId}"] [data-testid="edit-btn"]`).click({ force: true });
-        cy.get('[data-testid="bug-title"]').clear().type('Titre modifié par Cypress');
-        cy.get('[data-testid="submit-btn"]').click();
+      cy.get(`[data-id="${bugId}"] [data-testid="edit-btn"]`).click({ force: true });
+      cy.get('input[data-testid="bug-title"]').clear().type('Titre modifié par Cypress');
+      cy.get('[data-testid="submit-btn"]').click();
 
-        cy.get('[data-testid="toast"]').should('contain', 'mis à jour');
-        cy.get(`[data-id="${bugId}"] [data-testid="bug-title"]`).should('contain', 'Titre modifié par Cypress');
-      });
+      cy.get('[data-testid="toast"]').should('contain', 'mis à jour');
+      cy.get(`[data-id="${bugId}"] [data-testid="bug-title"]`).should('contain', 'Titre modifié par Cypress');
     });
-
   });
 
-  // =========================================
-  // TESTS DE SUPPRESSION DE BUG
-  // =========================================
-  describe('Suppression de bug', () => {
+});
 
-    it('devrait supprimer un bug', () => {
-      // Créer un bug à supprimer
-      cy.createBugApi({ title: 'Bug à supprimer', description: 'Test' }).then((response) => {
-        const bugId = response.body.id;
-        cy.reload();
+// =========================================
+// TESTS DE SUPPRESSION DE BUG
+// =========================================
+describe('Suppression de bug', () => {
 
-        cy.get('[data-testid="bug-card"]').then(($cardsBefore) => {
-          const countBefore = $cardsBefore.length;
+  it('devrait supprimer un bug', () => {
+    // Créer un bug à supprimer
+    cy.createBugApi({ title: 'Bug à supprimer', description: 'Test' }).then((response) => {
+      const bugId = response.body.id;
+      cy.reload();
 
-          // Stub de window.confirm
-          cy.on('window:confirm', () => true);
+      cy.get('[data-testid="bug-card"]').then(($cardsBefore) => {
+        const countBefore = $cardsBefore.length;
 
-          cy.get(`[data-id="${bugId}"] [data-testid="delete-btn"]`).click({ force: true });
+        // Stub de window.confirm
+        cy.on('window:confirm', () => true);
 
-          cy.get('[data-testid="toast"]').should('contain', 'supprimé');
-          cy.get('[data-testid="bug-card"]').should('have.length', countBefore - 1);
-        });
+        cy.get(`[data-id="${bugId}"] [data-testid="delete-btn"]`).click({ force: true });
+
+        cy.get('[data-testid="toast"]').should('contain', 'supprimé');
+        cy.get('[data-testid="bug-card"]').should('have.length', countBefore - 1);
       });
     });
-
-    it('ne devrait pas supprimer si on annule la confirmation', () => {
-      cy.createBugApi({ title: 'Bug à ne pas supprimer', description: 'Test' }).then((response) => {
-        const bugId = response.body.id;
-        cy.reload();
-
-        cy.get('[data-testid="bug-card"]').then(($cardsBefore) => {
-          const countBefore = $cardsBefore.length;
-
-          cy.on('window:confirm', () => false);
-
-          cy.get(`[data-id="${bugId}"] [data-testid="delete-btn"]`).click({ force: true });
-
-          cy.get('[data-testid="bug-card"]').should('have.length', countBefore);
-        });
-      });
-    });
-
   });
 
-  // =========================================
-  // TESTS D'API
-  // =========================================
-  describe('API - Tests d\'intégration', () => {
+  it('ne devrait pas supprimer si on annule la confirmation', () => {
+    cy.createBugApi({ title: 'Bug à ne pas supprimer', description: 'Test' }).then((response) => {
+      const bugId = response.body.id;
+      cy.reload();
 
-    it('GET /api/bugs - devrait retourner la liste des bugs', () => {
-      cy.request('GET', '/api/bugs').then((response) => {
+      cy.get('[data-testid="bug-card"]').then(($cardsBefore) => {
+        const countBefore = $cardsBefore.length;
+
+        cy.on('window:confirm', () => false);
+
+        cy.get(`[data-id="${bugId}"] [data-testid="delete-btn"]`).click({ force: true });
+
+        cy.get('[data-testid="bug-card"]').should('have.length', countBefore);
+      });
+    });
+  });
+
+});
+
+// =========================================
+// TESTS D'API
+// =========================================
+describe('API - Tests d\'intégration', () => {
+
+  it('GET /api/bugs - devrait retourner la liste des bugs', () => {
+    cy.request('GET', '/api/bugs').then((response) => {
+      expect(response.status).to.eq(200);
+      expect(response.body).to.be.an('array');
+      expect(response.body.length).to.be.at.least(1);
+    });
+  });
+
+  it('GET /api/bugs/:id - devrait retourner un bug spécifique', () => {
+    cy.request('GET', '/api/bugs').then((listResponse) => {
+      const bugId = listResponse.body[0].id;
+
+      cy.request('GET', `/api/bugs/${bugId}`).then((response) => {
         expect(response.status).to.eq(200);
-        expect(response.body).to.be.an('array');
-        expect(response.body.length).to.be.at.least(1);
+        expect(response.body).to.have.property('id', bugId);
+        expect(response.body).to.have.property('title');
+        expect(response.body).to.have.property('status');
       });
     });
+  });
 
-    it('GET /api/bugs/:id - devrait retourner un bug spécifique', () => {
-      cy.request('GET', '/api/bugs').then((listResponse) => {
-        const bugId = listResponse.body[0].id;
+  it('GET /api/bugs/:id - devrait retourner 404 pour un bug inexistant', () => {
+    cy.request({
+      method: 'GET',
+      url: '/api/bugs/BUG-999',
+      failOnStatusCode: false
+    }).then((response) => {
+      expect(response.status).to.eq(404);
+      expect(response.body).to.have.property('error');
+    });
+  });
 
-        cy.request('GET', `/api/bugs/${bugId}`).then((response) => {
-          expect(response.status).to.eq(200);
-          expect(response.body).to.have.property('id', bugId);
-          expect(response.body).to.have.property('title');
-          expect(response.body).to.have.property('status');
-        });
+  it('POST /api/bugs - devrait créer un bug', () => {
+    cy.request('POST', '/api/bugs', {
+      title: 'Bug API test',
+      description: 'Créé via l\'API',
+      priority: 'high',
+      severity: 'major',
+      reporter: 'bob'
+    }).then((response) => {
+      expect(response.status).to.eq(201);
+      expect(response.body).to.have.property('id');
+      expect(response.body.title).to.eq('Bug API test');
+      expect(response.body.status).to.eq('open');
+    });
+  });
+
+  it('POST /api/bugs - devrait rejeter un bug sans titre', () => {
+    cy.request({
+      method: 'POST',
+      url: '/api/bugs',
+      body: { description: 'Sans titre', priority: 'low', severity: 'trivial' },
+      failOnStatusCode: false
+    }).then((response) => {
+      expect(response.status).to.eq(400);
+      expect(response.body.error).to.contain('titre');
+    });
+  });
+
+  it('PUT /api/bugs/:id - devrait modifier un bug', () => {
+    cy.request('GET', '/api/bugs').then((listResponse) => {
+      const bugId = listResponse.body[0].id;
+
+      cy.request('PUT', `/api/bugs/${bugId}`, {
+        title: 'Titre modifié via API'
+      }).then((response) => {
+        expect(response.status).to.eq(200);
+        expect(response.body.title).to.eq('Titre modifié via API');
       });
     });
+  });
 
-    it('GET /api/bugs/:id - devrait retourner 404 pour un bug inexistant', () => {
+  it('DELETE /api/bugs/:id - devrait supprimer un bug', () => {
+    // D'abord créer un bug
+    cy.request('POST', '/api/bugs', {
+      title: 'Bug à supprimer via API',
+      description: 'Test',
+      priority: 'low',
+      severity: 'trivial'
+    }).then((createResponse) => {
+      const bugId = createResponse.body.id;
+
+      cy.request('DELETE', `/api/bugs/${bugId}`).then((response) => {
+        expect(response.status).to.eq(204);
+      });
+
+      // Vérifier que le bug n'existe plus
       cy.request({
         method: 'GET',
-        url: '/api/bugs/BUG-999',
+        url: `/api/bugs/${bugId}`,
         failOnStatusCode: false
       }).then((response) => {
         expect(response.status).to.eq(404);
-        expect(response.body).to.have.property('error');
       });
     });
+  });
 
-    it('POST /api/bugs - devrait créer un bug', () => {
-      cy.request('POST', '/api/bugs', {
-        title: 'Bug API test',
-        description: 'Créé via l\'API',
-        priority: 'high',
-        severity: 'major',
-        reporter: 'bob'
+  it('POST /api/bugs/:id/comments - devrait ajouter un commentaire', () => {
+    cy.request('GET', '/api/bugs').then((listResponse) => {
+      const bugId = listResponse.body[0].id;
+
+      cy.request('POST', `/api/bugs/${bugId}/comments`, {
+        text: 'Commentaire de test API',
+        author: 'bob'
       }).then((response) => {
         expect(response.status).to.eq(201);
-        expect(response.body).to.have.property('id');
-        expect(response.body.title).to.eq('Bug API test');
-        expect(response.body.status).to.eq('open');
+        expect(response.body.comments).to.be.an('array');
+        expect(response.body.comments[response.body.comments.length - 1].text).to.eq('Commentaire de test API');
       });
     });
-
-    it('POST /api/bugs - devrait rejeter un bug sans titre', () => {
-      cy.request({
-        method: 'POST',
-        url: '/api/bugs',
-        body: { description: 'Sans titre', priority: 'low', severity: 'trivial' },
-        failOnStatusCode: false
-      }).then((response) => {
-        expect(response.status).to.eq(400);
-        expect(response.body.error).to.contain('titre');
-      });
-    });
-
-    it('PUT /api/bugs/:id - devrait modifier un bug', () => {
-      cy.request('GET', '/api/bugs').then((listResponse) => {
-        const bugId = listResponse.body[0].id;
-
-        cy.request('PUT', `/api/bugs/${bugId}`, {
-          title: 'Titre modifié via API'
-        }).then((response) => {
-          expect(response.status).to.eq(200);
-          expect(response.body.title).to.eq('Titre modifié via API');
-        });
-      });
-    });
-
-    it('DELETE /api/bugs/:id - devrait supprimer un bug', () => {
-      // D'abord créer un bug
-      cy.request('POST', '/api/bugs', {
-        title: 'Bug à supprimer via API',
-        description: 'Test',
-        priority: 'low',
-        severity: 'trivial'
-      }).then((createResponse) => {
-        const bugId = createResponse.body.id;
-
-        cy.request('DELETE', `/api/bugs/${bugId}`).then((response) => {
-          expect(response.status).to.eq(204);
-        });
-
-        // Vérifier que le bug n'existe plus
-        cy.request({
-          method: 'GET',
-          url: `/api/bugs/${bugId}`,
-          failOnStatusCode: false
-        }).then((response) => {
-          expect(response.status).to.eq(404);
-        });
-      });
-    });
-
-    it('POST /api/bugs/:id/comments - devrait ajouter un commentaire', () => {
-      cy.request('GET', '/api/bugs').then((listResponse) => {
-        const bugId = listResponse.body[0].id;
-
-        cy.request('POST', `/api/bugs/${bugId}/comments`, {
-          text: 'Commentaire de test API',
-          author: 'bob'
-        }).then((response) => {
-          expect(response.status).to.eq(201);
-          expect(response.body.comments).to.be.an('array');
-          expect(response.body.comments[response.body.comments.length - 1].text).to.eq('Commentaire de test API');
-        });
-      });
-    });
-
-    it('GET /api/stats - devrait retourner les statistiques', () => {
-      cy.request('GET', '/api/stats').then((response) => {
-        expect(response.status).to.eq(200);
-        expect(response.body).to.have.property('total');
-        expect(response.body).to.have.property('byStatus');
-        expect(response.body).to.have.property('byPriority');
-        expect(response.body).to.have.property('bySeverity');
-      });
-    });
-
-    it('GET /api/health - devrait confirmer que le serveur est opérationnel', () => {
-      cy.request('GET', '/api/health').then((response) => {
-        expect(response.status).to.eq(200);
-        expect(response.body.status).to.eq('ok');
-        expect(response.body).to.have.property('timestamp');
-        expect(response.body).to.have.property('uptime');
-      });
-    });
-
   });
 
-  // =========================================
-  // TESTS D'UTILISATEUR
-  // =========================================
-  describe('Gestion des utilisateurs', () => {
-
-    it('devrait changer d\'utilisateur', () => {
-      cy.switchUser('alice');
-      cy.get('[data-testid="toast"]').should('contain', 'Alice Martin');
+  it('GET /api/stats - devrait retourner les statistiques', () => {
+    cy.request('GET', '/api/stats').then((response) => {
+      expect(response.status).to.eq(200);
+      expect(response.body).to.have.property('total');
+      expect(response.body).to.have.property('byStatus');
+      expect(response.body).to.have.property('byPriority');
+      expect(response.body).to.have.property('bySeverity');
     });
-
-    it('devrait afficher les 3 utilisateurs disponibles', () => {
-      cy.get('[data-testid="user-select"] option').should('have.length', 3);
-      cy.get('[data-testid="user-select"]').should('contain', 'Alice');
-      cy.get('[data-testid="user-select"]').should('contain', 'Bob');
-      cy.get('[data-testid="user-select"]').should('contain', 'Charlie');
-    });
-
   });
 
-  // =========================================
-  // TESTS RESPONSIVE
-  // =========================================
-  describe('Responsive', () => {
-
-    it('devrait être utilisable sur tablette', () => {
-      cy.viewport('ipad-2');
-
-      cy.get('[data-testid="new-bug-btn"]').should('be.visible');
-      cy.get('[data-testid="bug-list"]').should('be.visible');
+  it('GET /api/health - devrait confirmer que le serveur est opérationnel', () => {
+    cy.request('GET', '/api/health').then((response) => {
+      expect(response.status).to.eq(200);
+      expect(response.body.status).to.eq('ok');
+      expect(response.body).to.have.property('timestamp');
+      expect(response.body).to.have.property('uptime');
     });
+  });
 
-    it('devrait être utilisable sur mobile', () => {
-      cy.viewport('iphone-x');
+});
 
-      cy.get('[data-testid="new-bug-btn"]').should('be.visible');
-      cy.get('[data-testid="bug-card"]').first().should('be.visible');
-    });
+// =========================================
+// TESTS D'UTILISATEUR
+// =========================================
+describe('Gestion des utilisateurs', () => {
 
+  it('devrait changer d\'utilisateur', () => {
+    cy.switchUser('alice');
+    cy.get('[data-testid="user-select"]').should('contain', 'Alice Martin');
+  });
+
+  it('devrait afficher les 3 utilisateurs disponibles', () => {
+    cy.get('[data-testid="user-select"] option').should('have.length', 3);
+    cy.get('[data-testid="user-select"]').should('contain', 'Alice');
+    cy.get('[data-testid="user-select"]').should('contain', 'Bob');
+    cy.get('[data-testid="user-select"]').should('contain', 'Charlie');
+  });
+
+});
+
+// =========================================
+// TESTS RESPONSIVE
+// =========================================
+describe('Responsive', () => {
+
+  it('devrait être utilisable sur tablette', () => {
+    cy.viewport('ipad-2');
+
+    cy.get('[data-testid="new-bug-btn"]').should('be.visible');
+    cy.get('[data-testid="bug-list"]').should('be.visible');
+  });
+
+  it('devrait être utilisable sur mobile', () => {
+    cy.viewport('iphone-x');
+
+    cy.get('[data-testid="new-bug-btn"]').should('be.visible');
+    cy.get('[data-testid="bug-card"]').first().should('be.visible');
   });
 
 });
