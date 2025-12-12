@@ -1,5 +1,6 @@
 {
   "name": "bug-tracker-cicd",
+  "packageManager": "npm@11.7.0",
   "version": "1.0.0",
   "description": "Application de suivi de bugs pour TP CI/CD - Testeurs en alternance",
   "main": "src/server.js",

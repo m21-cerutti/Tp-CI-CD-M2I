@@ -1,0 +1,93 @@
+.docker-dind-job:
+  image: docker
+  services:
+    - name: docker:dind
+      alias: docker
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+  after_script:
+    - docker logout
+
+# ------------------------------
+
+.build-image:
+  variables:
+    IMAGE: ""
+    IMAGE_CONTEXT: ""
+  extends:
+    - .docker-dind-job
+  script:
+    - echo "Build '$IMAGE'"
+    - docker build --pull -t $IMAGE $IMAGE_CONTEXT
+    #- docker run $IMAGE
+    - docker push $IMAGE
+  only:
+    changes:
+      - .gitlab-ci.yml
+      - $IMAGE_CONTEXT/Dockerfile
+
+# ------------------------------
+
+stages:
+  - test
+  - build
+
+variables:
+  NODE_VERSION: "20"
+
+# ===========================================
+# JOB 1 : Tests
+# ===========================================
+test:
+  stage: test
+  image: cypress/browsers:node-20.9.0-chrome-118.0.5993.88-1-ff-118.0.2-edge-118.0.2088.46-1
+
+  script:
+    # TODO: Installer les dépendances
+    - npm ci --cache .npm --prefer-offline
+
+    # TODO: Lancer les tests Cypress
+    # Indice: npm run test:ci
+    - npm run test:ci
+
+  artifacts:
+    # TODO: Configurer les artefacts pour les vidéos/screenshots
+    when: on_failure
+    paths:
+      - cypress/videos
+      - cypress/screenshots
+    expire_in: 1 week
+  
+  cache:
+    key:
+      files:
+        - package-lock.json
+        - package.json
+    paths:
+      - .npm/
+    policy: pull-push
+    
+# ===========================================
+# JOB 2 : Build Docker
+# ===========================================
+build:
+  stage: build
+  needs: [test]
+  extends:
+    - .build-image
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  
+  variables:
+    IMAGE: $CI_REGISTRY_IMAGE/bug-tracker:latest
+    IMAGE_CONTEXT: "."
+
+  # TODO: Configurer les conditions d'exécution
+  # Ce job ne doit s'exécuter que si:
+  # - Les tests sont passés
+  # - On est sur la branche main
+
+  #script:
+    # TODO: Login au registry
+    # TODO: Build de l'image
+    # TODO: Push de l'image avec les tags appropriés
