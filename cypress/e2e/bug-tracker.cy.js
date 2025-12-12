@@ -120,7 +120,8 @@ describe('BugTrack - Tests E2E', () => {
 
     it('devrait mettre à jour les statistiques après création', () => {
 
-      cy.get('#stat-total').scrollIntoView().invoke('text').then((initialTotal) => {
+      cy.get('#stat-total').scrollIntoView().then((element) => 
+        cy.get('#stat-total').invoke('text').then((initialTotal) => {
         const initial = parseInt(initialTotal);
 
         cy.createBug({
@@ -131,9 +132,8 @@ describe('BugTrack - Tests E2E', () => {
         });
 
         cy.get('#stat-total').scrollIntoView().should('contain', initial + 1);
-      });
+      }));
     });
-
   });
 
   // =========================================
